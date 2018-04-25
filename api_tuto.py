@@ -183,7 +183,7 @@ class balanceOfCNB:
         raise web.seeother('https://mixin.one/oauth/authorize?client_id=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&scope=PROFILE:READ+ASSETS:READ')
 class depositCNB:
     def GET(self):
-        raise web.seeother('https://mixin.one/pay?recipient=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&asset=965e5c6e-434c-3fa9-b780-c50f43cd955c&amount=5000&trace=' + str(uuid.uuid1() + '&memo=TEXT'))
+        raise web.seeother('https://mixin.one/pay?recipient=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&asset=965e5c6e-434c-3fa9-b780-c50f43cd955c&amount=5000&trace=' + str(uuid.uuid1()) + '&memo=TEXT')
 
 
 class auth:
