@@ -7,10 +7,15 @@ import datetime
 import calendar
 import hashlib
 import base64
+import Crypto
+import time
+import uuid
+import random
+
 from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 from Crypto.Cipher import AES
 from Crypto import Random
+from Crypto.Cipher import PKCS1_OAEP
 
 
 private_key = """-----BEGIN RSA PRIVATE KEY-----
@@ -35,7 +40,8 @@ mixin_pin_token = """csEaHIh5RuVcXqcJ9aNp/AoubC/0L9ZtGWn037XREiR5JlbAvDW52obceJ9
 urls = (
     '/', 'index',
     '/auth','auth',
-    '/CNB', 'balanceOfCNB'
+    '/CNB', 'balanceOfCNB',
+    '/depositCNB','depositCNB'
 )
 
 mixin_client_id = "3c5fd587-5ac3-4fb6-b294-423ba3473f7d"
@@ -43,6 +49,25 @@ mixin_client_secret = "9cb0c7245bda18ca34b6e23bf2f194826b474907f8d898a92013e2c0d
 mixin_pay_pin = '515532'
 mixin_pay_sessionid = '25083eb4-adab-49f3-9600-81d244b7cbc4'
 
+
+class LUCKY:
+    def init(self):
+        self.counter = 0
+    def increase(self):
+        self.counter = self.counter + 1
+    def isLucky(self):
+        self.increase()
+        if self.counter < 10:
+            return True
+        if self.counter > 20:
+            self.reset()
+            return False
+        return False
+    def reset(self):
+        self.counter = 0
+
+luckyinstanc = LUCKY()
+luckyinstanc.init()
 
 BLOCK_SIZE = 16  # Bytes
 pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * \
@@ -100,12 +125,52 @@ class MIXIN_API:
         print("RS512")
         print("====>" + encoded)
         return encoded
+
     def genEncrypedPin(self):
+        privKeyObj = RSA.importKey(self.private_key)
         decoded_result = base64.b64decode(self.pin_token)
+        decoded_result_inhexString = ":".join("{:02x}".format(ord(c)) for c in decoded_result)
         print("pin_token is:" + self.pin_token)
-        print("decoded content of encrypted pin_token is:")
-        print(decoded_result)
-        return self.pin_token
+        print("lenth of decoded pin_token is:" + str(len(decoded_result)))
+        cipher = PKCS1_OAEP.new(key = privKeyObj, hashAlgo = Crypto.Hash.SHA256, label = self.sessionid)
+
+        decrypted_msg = cipher.decrypt(decoded_result)
+	decrypted_msg_inhexString = ":".join("{:02x}".format(ord(c)) for c in decrypted_msg)
+        print("lenth of AES key:" + str(len(decrypted_msg)))
+        print("content of AES key:")
+        print(decrypted_msg_inhexString)
+        
+        keyForAES = decrypted_msg
+
+        ts = int(time.time())
+        print("ts"+ str(ts))
+        tszero = ts%0x100                                  
+        tsone = (ts%0x10000) >> 8
+        tstwo = (ts%0x1000000) >> 16
+        tsthree = (ts%0x100000000) >> 24
+        tsstring = chr(tszero) + chr(tsone) + chr(tstwo) + chr(tsthree) + '\0\0\0\0'
+        counter = '\1\0\0\0\0\0\0\0'
+        toEncryptContent = self.asset_pin + tsstring + tsstring
+        print("before padding:" + str(len(toEncryptContent)))
+        lenOfToEncryptContent = len(toEncryptContent)
+        toPadCount = 16 - lenOfToEncryptContent % 16
+        if toPadCount > 0:
+            paddedContent = toEncryptContent + chr(toPadCount) * toPadCount
+        else:
+            paddedContent = toEncryptContent
+        print("after padding:" + str(len(paddedContent)))
+
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(keyForAES, AES.MODE_CBC, iv)
+        encrypted_result = cipher.encrypt(paddedContent)
+        msg = iv + encrypted_result
+        encrypted_pin = base64.b64encode(msg)
+        print("to encrypted content in hex is :" + ":".join("{:02x}".format(ord(c)) for c in paddedContent))
+        print("iv in hex is " + ":".join("{:02x}".format(ord(c)) for c in iv))
+        print("iv + encrypted result in hex is :" + ":".join("{:02x}".format(ord(c)) for c in (iv + encrypted_result)))
+        print("iv + encrypted_result in base64 :" + encrypted_pin)
+
+        return encrypted_pin
 
 
 class index:
@@ -116,6 +181,10 @@ class index:
 class balanceOfCNB:
     def GET(self):
         raise web.seeother('https://mixin.one/oauth/authorize?client_id=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&scope=PROFILE:READ+ASSETS:READ')
+class depositCNB:
+    def GET(self):
+        raise web.seeother('https://mixin.one/pay?recipient=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&asset=965e5c6e-434c-3fa9-b780-c50f43cd955c&amount=5000&trace=' + str(uuid.uuid1() + '&memo=TEXT'))
+
 
 class auth:
     def GET(self):
@@ -149,6 +218,8 @@ class auth:
         xin_asset = xin_asset_response.json()
         cnb_asset_id = '965e5c6e-434c-3fa9-b780-c50f43cd955c'
         cnb_asset_response = requests.get('https://api.mixin.one/assets/' + cnb_asset_id, headers = {"Authorization":"Bearer " + access_token})
+        if luckyinstanc.isLucky() == False:
+            return "Shame on your luck"
 
 	mixin_api_robot = MIXIN_API()
 	mixin_api_robot.appid = mixin_client_id
@@ -159,21 +230,18 @@ class auth:
         mixin_api_robot.pin_token = mixin_pin_token
         encrypted_pin = mixin_api_robot.genEncrypedPin()
 
-        body = {'asset_id': cnb_asset_id, 'counter_user_id':userid, 'amount':'123', 'pin':'12345', 'trace_id':'965e5c6e-434c-3fa9-b780-c50f43cd955c'}
+        bonus = str(random.randint(0,234))
+        body = {'asset_id': cnb_asset_id, 'counter_user_id':userid, 'amount':bonus, 'pin':encrypted_pin, 'trace_id':str(uuid.uuid1())}
         body_in_json = json.dumps(body)
-        
-        sig = mixin_api_robot.genGetSig("users", body_in_json)
-        print("sig")
-        print(sig)
 
         encoded = mixin_api_robot.genPOSTJwtToken('/transfers', body_in_json, mixin_client_id)
         r = requests.post('https://api.mixin.one/transfers', json = body, headers = {"Authorization":"Bearer " + encoded})
+        print("post url with:https://api.mixin.one/transfers" + " with body:" + body_in_json + " with header:" + json.dumps({"Authorization":"Bearer " + encoded}))
 	print(r.json())
         allassets = myasset.json()["data"]
-        print("check my cnb assets")
         cnb_asset = cnb_asset_response.json()
 
-        return userid + "Your cnb balance in mixin world is " + str(cnb_asset["data"]["balance"])
+        return "You got " + bonus + " CNB"
 
 if __name__ == "__main__":
     app = web.application(urls, globals())
