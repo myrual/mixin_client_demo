@@ -67,7 +67,14 @@ def sendUserAppButton(websocketInstance, in_conversation_id, to_user_id, realLin
     params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"APP_BUTTON_GROUP","data":base64.b64encode(btn)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
+def sendUserGameEntrance(webSocketInstance, in_config, in_conversation_id, to_user_id, inAssetName, inAssetID, inPayAmount, linkColor = "#0CAAF5"):
+    payLink = "https://mixin.one/pay?recipient=" + in_config.mixin_client_id + "&asset=" + inAssetID + "&amount=" + str(inPayAmount) + '&trace=' + str(uuid.uuid1()) + '&memo=PRS2CNB'
+    btn = '[{"label":"' + inAssetName + '","action":"' + payLink + '","color":"' + linkColor + '"}]'
+    gameEntranceParams = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"APP_BUTTON_GROUP","data":base64.b64encode(btn)}
+    writeMessage(webSocketInstance, "CREATE_MESSAGE",gameEntranceParams)
+sendUserPayAppButton = sendUserGameEntrance
 
+ 
 def showReceipt(websocketInstance, inConversationID, reply_user_id, reply_snapShotID):
     payLink = "https://mixin.one/snapshots/" + reply_snapShotID
     shortSnapShort = reply_snapShotID[0:13] + "..."
@@ -162,7 +169,7 @@ def on_message(ws, message):
             ConversationId = data['conversation_id']
             realData = base64.b64decode(dataindata)
             if '?' == realData or u'？'.encode('utf-8') == realData or 'help' == realData or 'Help' == realData or u'帮助'.encode('utf-8') == realData:
-                btn = u"发送区块链系列贴纸有奇效：犹豫千百回，不如一把梭哈；向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
+                btn = u"发送区块链系列贴纸有奇效：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
                 return
@@ -170,6 +177,12 @@ def on_message(ws, message):
                 btn = u"老板您来了".encode('utf-8')
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
+                return
+            btn = u"CNB由老社发行，zhuzi撰写白皮书巨量CNB请西乔设计logo，目前已成为最具收藏价值的空气币。本机器人代码 https://github.com/myrual/mixin_client_dem我可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
+	    params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
+            writeMessage(ws, "CREATE_MESSAGE",params)
+            return
+           
         elif categoryindata == "PLAIN_TEXT":
             print("PLAIN_TEXT but unkonw:")
             print(rdata_obj)
@@ -221,3 +234,4 @@ if __name__ == "__main__":
             ws.on_open = on_open
             ws.run_forever()
     print("run")
+            btn = u"CNB是无投资价值的空气币，请勿购买。CNB由老社发行，zhuzi撰写白皮书并出巨量CNB请西乔设计logo。本机器人代码 https://github.com/myrual/mixin_client_dem我可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
