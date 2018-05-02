@@ -177,9 +177,8 @@ def on_message(ws, message):
                 btn = u"老板您来了".encode('utf-8')
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
-                return
-            btn = u"CNB由老社发行，zhuzi撰写白皮书巨量CNB请西乔设计logo，目前已成为最具收藏价值的空气币。本机器人代码 https://github.com/myrual/mixin_client_dem我可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
-	    params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
+            btn = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
+            params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
             writeMessage(ws, "CREATE_MESSAGE",params)
             return
            
@@ -234,4 +233,4 @@ if __name__ == "__main__":
             ws.on_open = on_open
             ws.run_forever()
     print("run")
-            btn = u"CNB是无投资价值的空气币，请勿购买。CNB由老社发行，zhuzi撰写白皮书并出巨量CNB请西乔设计logo。本机器人代码 https://github.com/myrual/mixin_client_dem我可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
+            
