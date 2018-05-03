@@ -29,3 +29,4 @@ kill prociess id
 ```
 
 
+[中文搭建教程](https://www.jianshu.com/p/727cca139a57)
