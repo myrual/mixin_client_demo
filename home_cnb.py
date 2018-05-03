@@ -11,6 +11,7 @@ import Crypto
 import time
 import uuid
 import random
+import mixin_config
 
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
@@ -178,24 +179,7 @@ class MIXIN_API:
 
 class index:
     def GET(self):
-        print(web.ctx.env)
-        return """<!DOCTYPE html>
-<html>
-<head>
-<title>CNB robot</title>
-</head>
-<body>
-
-<h1><a href="CNB">Get random CNB Bonus</a></h1>
-<br>
-<h1><a href="billionCNB">Make world peace</a></h1>
-<br>
-<h1><a href="millionCNB">Keep inner peace</a></h1>
-
-
-</body>
-</html> """
-
+        web.seeother('https://mixin.one/oauth/authorize?client_id=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&scope=PROFILE:READ')
 class balanceOfCNB:
     def GET(self):
         raise web.seeother('https://mixin.one/oauth/authorize?client_id=3c5fd587-5ac3-4fb6-b294-423ba3473f7d&scope=PROFILE:READ')
@@ -219,54 +203,13 @@ class depositMillionCNB:
 
 
 class auth:
-    def listAsset(self):
-        mixindata = web.input()
-	print(mixindata)
-        r = requests.post('https://api.mixin.one/oauth/token', json = {"client_id": mixin_client_id, "code": mixindata.code,"client_secret": mixin_client_secret})
-        result = r.json()
-	print(result)
-        access_token = result["data"]["access_token"]
-        personinfo = requests.get('https://api.mixin.one/me', headers = {"Authorization":"Bearer " + access_token})
-	userid = personinfo.json()["data"]["user_id"]
-	print(personinfo.json())
-        xin_asset_id = "c94ac88f-4671-3976-b60a-09064f1811e8"
-        xin_asset_response = requests.get('https://api.mixin.one/assets/' + xin_asset_id, headers = {"Authorization":"Bearer " + access_token})
-        print("check my mixin assets")
-        xin_asset = xin_asset_response.json()
-        cnb_asset_id = '965e5c6e-434c-3fa9-b780-c50f43cd955c'
-        cnb_asset_response = requests.get('https://api.mixin.one/assets/' + cnb_asset_id, headers = {"Authorization":"Bearer " + access_token})
-        if luckyinstanc.isLucky() == False:
-            return "Pool is empty, it will be full soon"
-
-	mixin_api_robot = MIXIN_API()
-	mixin_api_robot.appid = mixin_client_id
-        mixin_api_robot.secret = mixin_client_secret
-        mixin_api_robot.sessionid = mixin_pay_sessionid
-        mixin_api_robot.private_key = private_key
-        mixin_api_robot.asset_pin = mixin_pay_pin
-        mixin_api_robot.pin_token = mixin_pin_token
-        encrypted_pin = mixin_api_robot.genEncrypedPin()
-
-        bonus = str(random.randint(0,1000000))
-        body = {'asset_id': cnb_asset_id, 'counter_user_id':userid, 'amount':bonus +'.1984', 'pin':encrypted_pin, 'trace_id':str(uuid.uuid1())}
-        body_in_json = json.dumps(body)
-
-        encoded = mixin_api_robot.genPOSTJwtToken('/transfers', body_in_json, mixin_client_id)
-        r = requests.post('https://api.mixin.one/transfers', json = body, headers = {"Authorization":"Bearer " + encoded})
-        print("post url with:https://api.mixin.one/transfers" + " with body:" + body_in_json + " with header:" + json.dumps({"Authorization":"Bearer " + encoded}))
-	print(r.json())
-        allassets = myasset.json()["data"]
-        cnb_asset = cnb_asset_response.json()
-
-        return "You got " + bonus + " CNB"
-
     def GET(self):
         mixindata = web.input(code = "no")
 	print(mixindata)
         if mixindata.code == "no":
             return "I don't know you, can not give your bonus"
 
-        r = requests.post('https://api.mixin.one/oauth/token', json = {"client_id": mixin_client_id, "code": mixindata.code,"client_secret": mixin_client_secret})
+        r = requests.post('https://api.mixin.one/oauth/token', json = {"client_id": mixin_config.mixin_client_id, "code": mixindata.code,"client_secret": mixin_config.mixin_client_secret})
         result = r.json()
 	print(result)
         if "data" not in result or "access_token" not in result["data"]:
@@ -278,28 +221,9 @@ class auth:
         xin_asset_id = "c94ac88f-4671-3976-b60a-09064f1811e8"
         print("check my mixin assets")
         cnb_asset_id = '965e5c6e-434c-3fa9-b780-c50f43cd955c'
-	mixin_api_robot = MIXIN_API()
-	mixin_api_robot.appid = mixin_client_id
-        mixin_api_robot.secret = mixin_client_secret
-        mixin_api_robot.sessionid = mixin_pay_sessionid
-        mixin_api_robot.private_key = private_key
-        mixin_api_robot.asset_pin = mixin_pay_pin
-        mixin_api_robot.pin_token = mixin_pin_token
-        encrypted_pin = mixin_api_robot.genEncrypedPin()
-
-        bonus = str(random.randint(0,2345))
-        body = {'asset_id': cnb_asset_id, 'counter_user_id':userid, 'amount':bonus, 'pin':encrypted_pin, 'trace_id':str(uuid.uuid1())}
-        body_in_json = json.dumps(body)
-
-        encoded = mixin_api_robot.genPOSTJwtToken('/transfers', body_in_json, mixin_client_id)
-        r = requests.post('https://api.mixin.one/transfers', json = body, headers = {"Authorization":"Bearer " + encoded})
-        print("post url with:https://api.mixin.one/transfers" + " with body:" + body_in_json + " with header:" + json.dumps({"Authorization":"Bearer " + encoded}))
-	print(r.json())
-
         sendmessage_body = {}
 
-        return "You got " + bonus + " CNB"
-
+        return "You are " + userid
 if __name__ == "__main__":
     app = web.application(urls, globals())
     app.run()
