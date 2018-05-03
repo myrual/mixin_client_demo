@@ -7,6 +7,8 @@ pip install PyJWT
 pip install websocket-client
 pip install requests
 pip install pycrypto
+pip install cryptography
+pip install pycrypto ecdsa
 ```
 
 
