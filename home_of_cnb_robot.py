@@ -219,18 +219,16 @@ def on_open(ws):
 
 if __name__ == "__main__":
 
-    if SocketStatus == 0:
-        while True:
-            encoded = mixin_api_robot.genGETJwtToken('/', "", str(uuid.uuid4()))
-            websocket.enableTrace(False)
-            ws = websocket.WebSocketApp("wss://blaze.mixin.one/",
+    encoded = mixin_api_robot.genGETJwtToken('/', "", str(uuid.uuid4()))
+    websocket.enableTrace(False)
+    ws = websocket.WebSocketApp("wss://blaze.mixin.one/",
                               on_message = on_message,
                               on_error = on_error,
                               on_close = on_close,
                               header = ["Authorization:Bearer " + encoded],
                               subprotocols = ["Mixin-Blaze-1"],
                               on_data = on_data)
-            ws.on_open = on_open
-            ws.run_forever()
+    ws.on_open = on_open
+    ws.run_forever()
     print("run")
             
