@@ -3,9 +3,10 @@
 ##pre request
 ```
 pip install web.py
-pip install pycrypto
-pip install webclient
+pip install PyJWT
+pip install websocket-client
 pip install requests
+pip install pycrypto
 ```
 
 
