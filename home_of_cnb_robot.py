@@ -72,6 +72,10 @@ def sendUserContactCard(websocketInstance, in_conversation_id, to_user_id, to_sh
     params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_CONTACT","data":base64.b64encode(base64.b64encode(btnJson))}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
+def sendUserText(websocketInstance, in_conversation_id, to_user_id, textContent):
+    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id ,"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(textContent)}
+    return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
+
 
 def sendUserSticker(websocketInstance, in_conversation_id, to_user_id, album_id, sticker_name):
     realStickerObj = {}
@@ -195,13 +199,15 @@ def on_message(ws, message):
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
             btn = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
-            params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
-            writeMessage(ws, "CREATE_MESSAGE",params)
+            sendUserText(ws, data['conversation_id'], data['user_id'], btn)
 
             sendUserSticker(ws, data['conversation_id'], data['user_id'], "eb002790-ef9b-467d-93c6-6a1d63fa2bee", 'productive')
 
             lilin_user_id_in_contact_card_in_uuid_format = "28ee416a-0eaa-4133-bc79-9676909b7b4e"
             sendUserContactCard(ws, data['conversation_id'], data['user_id'],lilin_user_id_in_contact_card_in_uuid_format)
+
+            sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
+
             return
            
         elif categoryindata == "PLAIN_TEXT":
