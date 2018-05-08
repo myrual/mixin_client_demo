@@ -208,9 +208,11 @@ def on_message(ws, message):
             sticker_blockchain_album_id = "eb002790-ef9b-467d-93c6-6a1d63fa2bee"
             sendUserSticker(ws, data['conversation_id'], data['user_id'], sticker_blockchain_album_id, 'productive')
 
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----名片 example-----")
-            lilin_user_id_in_contact_card_in_uuid_format = "28ee416a-0eaa-4133-bc79-9676909b7b4e"
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----名片 example 老社和zhuzi-----")
+            laoshe_user_id_in_contact_card_in_uuid_format = "99cf45c4-a64b-4aa1-8f9b-40c3e21d6468"
             zhuzi_user_id_in_contact_card_in_uuid_format = "b4450d4c-9218-4d30-995f-83e14b29e9ad"
+
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'],laoshe_user_id_in_contact_card_in_uuid_format)
             sendUserContactCard(ws, data['conversation_id'], data['user_id'],zhuzi_user_id_in_contact_card_in_uuid_format)
 
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----链接按钮 example-----")
