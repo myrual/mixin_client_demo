@@ -67,6 +67,22 @@ def sendUserAppButton(websocketInstance, in_conversation_id, to_user_id, realLin
     params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"APP_BUTTON_GROUP","data":base64.b64encode(btn)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
+def sendUserContactCard(websocketInstance, in_conversation_id, to_user_id, share_userid):
+    btnJson = json.dumps({"user_id":to_user_id, "shared_user_id":share_userid})
+    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_CONTACT","data":base64.b64encode(base64.b64encode(btnJson))}
+    return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
+
+
+def sendUserSticker(websocketInstance, in_conversation_id, to_user_id, album_id, sticker_name):
+    realStickerObj = {}
+    realStickerObj['album_id'] = album_id
+    realStickerObj['name'] = sticker_name
+
+    btnJson = json.dumps(realStickerObj)
+    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_STICKER","data":base64.b64encode(base64.b64encode(btnJson))}
+    return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
+
+
 def sendUserGameEntrance(webSocketInstance, in_config, in_conversation_id, to_user_id, inAssetName, inAssetID, inPayAmount, linkColor = "#0CAAF5"):
     payLink = "https://mixin.one/pay?recipient=" + in_config.mixin_client_id + "&asset=" + inAssetID + "&amount=" + str(inPayAmount) + '&trace=' + str(uuid.uuid1()) + '&memo=PRS2CNB'
     btn = '[{"label":"' + inAssetName + '","action":"' + payLink + '","color":"' + linkColor + '"}]'
@@ -172,6 +188,7 @@ def on_message(ws, message):
                 btn = u"发送区块链系列贴纸有奇效：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了".encode('utf-8')
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
+
                 return
             if data['user_id'] == mixin_config.admin_uuid:
                 btn = u"老板您来了".encode('utf-8')
@@ -180,6 +197,18 @@ def on_message(ws, message):
             btn = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
             params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
             writeMessage(ws, "CREATE_MESSAGE",params)
+
+            sendUserSticker(ws, data['conversation_id'], data['user_id'], "eb002790-ef9b-467d-93c6-6a1d63fa2bee", 'productive')
+            zhuzi_id = '437515'
+            laoshe_id = '21401'
+            xiqiao = '1092228'
+            huoju = '1044635'
+
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'], zhuzi_id)
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'], laoshe_id)
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'], xiqiao)
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'], huoju)
+
             return
            
         elif categoryindata == "PLAIN_TEXT":
