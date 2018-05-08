@@ -67,8 +67,8 @@ def sendUserAppButton(websocketInstance, in_conversation_id, to_user_id, realLin
     params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"APP_BUTTON_GROUP","data":base64.b64encode(btn)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
-def sendUserContactCard(websocketInstance, in_conversation_id, to_user_id, share_userid):
-    btnJson = json.dumps({"user_id":to_user_id, "shared_user_id":share_userid})
+def sendUserContactCard(websocketInstance, in_conversation_id, to_user_id, to_share_userid):
+    btnJson = json.dumps({"user_id":to_share_userid})
     params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_CONTACT","data":base64.b64encode(base64.b64encode(btnJson))}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
@@ -199,16 +199,9 @@ def on_message(ws, message):
             writeMessage(ws, "CREATE_MESSAGE",params)
 
             sendUserSticker(ws, data['conversation_id'], data['user_id'], "eb002790-ef9b-467d-93c6-6a1d63fa2bee", 'productive')
-            zhuzi_id = '437515'
-            laoshe_id = '21401'
-            xiqiao = '1092228'
-            huoju = '1044635'
 
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'], zhuzi_id)
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'], laoshe_id)
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'], xiqiao)
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'], huoju)
-
+            lilin_user_id_in_contact_card_in_uuid_format = "28ee416a-0eaa-4133-bc79-9676909b7b4e"
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'],lilin_user_id_in_contact_card_in_uuid_format)
             return
            
         elif categoryindata == "PLAIN_TEXT":
