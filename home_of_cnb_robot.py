@@ -178,7 +178,7 @@ def on_message(ws, message):
                             writeMessage(ws, "CREATE_MESSAGE",params)
                             return
                     freeBonusTimeTable[data['user_id']] = now
-                    btn = u"High起来".encode('utf-8')
+                    btn = u"浑身掉钱的大佬就是很任性".encode('utf-8')
 	            params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                     writeMessage(ws, "CREATE_MESSAGE",params)
                     bonus = str(random.randint(0,123456))
@@ -198,14 +198,22 @@ def on_message(ws, message):
                 btn = u"老板您来了".encode('utf-8')
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
-            btn = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
-            sendUserText(ws, data['conversation_id'], data['user_id'], btn)
 
-            sendUserSticker(ws, data['conversation_id'], data['user_id'], "eb002790-ef9b-467d-93c6-6a1d63fa2bee", 'productive')
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----文本消息 example-----")
+            introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
+            sendUserText(ws, data['conversation_id'], data['user_id'], introductionContent)
 
+
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----Sticker example-----")
+            sticker_blockchain_album_id = "eb002790-ef9b-467d-93c6-6a1d63fa2bee"
+            sendUserSticker(ws, data['conversation_id'], data['user_id'], sticker_blockchain_album_id, 'productive')
+
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----名片 example-----")
             lilin_user_id_in_contact_card_in_uuid_format = "28ee416a-0eaa-4133-bc79-9676909b7b4e"
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'],lilin_user_id_in_contact_card_in_uuid_format)
+            zhuzi_user_id_in_contact_card_in_uuid_format = "b4450d4c-9218-4d30-995f-83e14b29e9ad"
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'],zhuzi_user_id_in_contact_card_in_uuid_format)
 
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----链接按钮 example-----")
             sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
 
             return
