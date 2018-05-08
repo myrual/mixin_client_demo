@@ -3,9 +3,12 @@
 ##pre request
 ```
 pip install web.py
-pip install pycrypto
-pip install webclient
+pip install PyJWT
+pip install websocket-client
 pip install requests
+pip install pycrypto
+pip install cryptography
+pip install pycrypto ecdsa
 ```
 
 
@@ -26,3 +29,4 @@ kill prociess id
 ```
 
 
+[中文搭建教程](https://www.jianshu.com/p/727cca139a57)
