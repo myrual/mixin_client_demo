@@ -116,6 +116,25 @@ def replayMessage(websocketInstance, msgid):
 
 
     return
+def listAssets(robot, config):
+    encoded = robot.genGETJwtToken('/assets', "", config.mixin_client_id)
+    r = requests.get('https://api.mixin.one/assets', headers = {"Authorization":"Bearer " + encoded, "Mixin-Device-Id":config.admin_uuid})
+    print(r.status_code)
+    if r.status_code != 200:
+        error_body = result_obj['error']
+        print(error_body)
+
+    r.raise_for_status()
+
+    result_obj = r.json()
+    print(result_obj)
+    assets_info = result_obj["data"]
+    asset_list = []
+    for singleAsset in assets_info:
+        if singleAsset["balance"] != "0":
+            asset_list.append((singleAsset["symbol"], singleAsset["balance"]))
+    return asset_list
+
 
 def on_message(ws, message):
     global admin_conversation_id
@@ -198,6 +217,9 @@ def on_message(ws, message):
                 btn = u"老板您来了".encode('utf-8')
 	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                 writeMessage(ws, "CREATE_MESSAGE",params)
+                for eachNonZeroAsset in listAssets(mixin_api_robot, mixin_config):
+                    sendUserText(ws, data['conversation_id'], data['user_id'], str(eachNonZeroAsset))
+
 
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----文本消息 example-----")
             introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
@@ -259,7 +281,7 @@ if __name__ == "__main__":
     while True:
 
         encoded = mixin_api_robot.genGETJwtToken('/', "", str(uuid.uuid4()))
-        websocket.enableTrace(False)
+        websocket.enableTrace(True)
         ws = websocket.WebSocketApp("wss://blaze.mixin.one/",
                                   on_message = on_message,
                                   on_error = on_error,
