@@ -242,7 +242,7 @@ def on_message(ws, message):
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----链接按钮 example-----")
             sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----当前热门机器人example-----")
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_user_id_in_contact_card_in_uuid_format)
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
 
 
             return
