@@ -233,12 +233,17 @@ def on_message(ws, message):
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----名片 example 老社和zhuzi-----")
             laoshe_user_id_in_contact_card_in_uuid_format = "99cf45c4-a64b-4aa1-8f9b-40c3e21d6468"
             zhuzi_user_id_in_contact_card_in_uuid_format = "b4450d4c-9218-4d30-995f-83e14b29e9ad"
+            robot_cnb_atm_user_id_in_contact_card_in_uuid_format = "4055702e-09d3-418d-8956-38cf637ae204"
 
             sendUserContactCard(ws, data['conversation_id'], data['user_id'],laoshe_user_id_in_contact_card_in_uuid_format)
             sendUserContactCard(ws, data['conversation_id'], data['user_id'],zhuzi_user_id_in_contact_card_in_uuid_format)
 
+
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----链接按钮 example-----")
             sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----当前热门机器人example-----")
+            sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_user_id_in_contact_card_in_uuid_format)
+
 
             return
            
