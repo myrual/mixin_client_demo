@@ -185,6 +185,12 @@ def on_message(ws, message):
             sendUserText(ws, data['conversation_id'], data['user_id'], str(realAssetObj))
 
         if categoryindata == "PLAIN_STICKER":
+            typeindata = data["type"]
+            categoryindata = data["category"]
+            conversationid = data["conversation_id"]
+            data['user_id'] == mixin_config.admin_uuid
+            sendUserText(ws, data['conversation_id'], data['user_id'], str({'type':data['type'],'category':data['category'], 'conversation_id':data['conversation_id'], 'user_id':data['user_id']}))
+
             ConversationId = data['conversation_id']
             realStickerData = base64.b64decode(dataindata)
             realStickerObj = json.loads(base64.b64decode(realStickerData))
