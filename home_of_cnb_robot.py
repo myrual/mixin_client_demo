@@ -13,6 +13,7 @@ import mixin_config
 import mixin_asset_list
 import random
 import datetime
+import md5
 
 try:
     import thread
@@ -75,6 +76,10 @@ def sendUserContactCard(websocketInstance, in_conversation_id, to_user_id, to_sh
 def sendUserText(websocketInstance, in_conversation_id, to_user_id, textContent):
     params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id ,"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(textContent)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
+def sendGroupText(websocketInstance, in_conversation_id, textContent):
+    params = {"conversation_id": in_conversation_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(textContent)}
+    return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
+
 
 
 def sendUserSticker(websocketInstance, in_conversation_id, to_user_id, album_id, sticker_name):
@@ -116,6 +121,19 @@ def replayMessage(websocketInstance, msgid):
 
 
     return
+
+replyMessage = replayMessage
+def buildConversationId(robot_id, user_id):
+    n = md5.new()
+    n.update(user_id)
+    n.update(robot_id)
+    result = n.digest()
+    result_6 = chr((ord(result[6]) & 0x0f) | 0x30)
+    result_8 = chr((ord(result[8]) & 0x3f) | 0x80)
+    result_new = result[:6] + result_6 + result[7] + result_8 + result[9:]
+    conver_id = uuid.UUID(bytes=result_new)
+    return str(conver_id)
+
 def listAssets(robot, config):
     encoded = robot.genGETJwtToken('/assets', "", config.mixin_client_id)
     r = requests.get('https://api.mixin.one/assets', headers = {"Authorization":"Bearer " + encoded, "Mixin-Device-Id":config.admin_uuid})
@@ -167,6 +185,11 @@ def on_message(ws, message):
             return
         if categoryindata == "PLAIN_IMAGE" or categoryindata == "SYSTEM_CONVERSATION":
             replayMessage(ws, msgid)
+            replyMessage(ws, msgid)
+            realData = base64.b64decode(dataindata)
+            sysConversationObj = json.loads(realData)
+            if sysConversationObj["action"] == "ADD":
+                sendGroupText(ws, conversationid, "hello")
 
         if categoryindata == "SYSTEM_ACCOUNT_SNAPSHOT" and typeindata == "message":
 
@@ -256,7 +279,7 @@ def on_message(ws, message):
             sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
 
 
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----付费链接按钮 example-----")
+            sendUserText(ws, buildConversationId(mixin_config.mixin_client_id, data['user_id']), data['user_id'], "-----付费链接按钮 example-----")
             sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
             sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
             sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
