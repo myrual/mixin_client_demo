@@ -177,6 +177,13 @@ def on_message(ws, message):
             asset_amount = realAssetObj["amount"]
             if realAssetObj["asset_id"] == mixin_asset_list.CNB_ASSET_ID:
                 showReceipt(ws, conversationid, userid, realAssetObj["snapshot_id"])
+                if asset_amount == "1":
+                    transferTo(mixin_api_robot, mixin_config, userid, realAssetObj["asset_id"],"2","pay 1 get 2")
+                    return
+
+            transferTo(mixin_api_robot, mixin_config, userid, realAssetObj["asset_id"],asset_amount,"rollback")
+            sendUserText(ws, data['conversation_id'], data['user_id'], str(realAssetObj))
+
         if categoryindata == "PLAIN_STICKER":
             ConversationId = data['conversation_id']
             realStickerData = base64.b64decode(dataindata)
@@ -241,6 +248,15 @@ def on_message(ws, message):
 
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----链接按钮 example-----")
             sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
+
+
+            sendUserText(ws, data['conversation_id'], data['user_id'], "-----付费链接按钮 example-----")
+            sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
+            sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
+            sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
+
+
+
             sendUserText(ws, data['conversation_id'], data['user_id'], "-----当前热门机器人example-----")
             sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
 
