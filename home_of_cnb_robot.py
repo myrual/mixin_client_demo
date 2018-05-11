@@ -144,12 +144,25 @@ def on_message(ws, message):
     rdata_injson = f.read()
     rdata_obj = json.loads(rdata_injson)
     action = rdata_obj["action"]
-    if action not in ["ACKNOWLEDGE_MESSAGE_RECEIPT" ,"CREATE_MESSAGE"]:
+    print(rdata_obj)
+
+    if action not in ["ACKNOWLEDGE_MESSAGE_RECEIPT" ,"CREATE_MESSAGE", "LIST_PENDING_MESSAGES"]:
         print("unknow action")
         print(rdata_obj)
         return
     if action == "ACKNOWLEDGE_MESSAGE_RECEIPT":
         return
+    if action == "CREATE_MESSAGE" and 'error' in rdata_obj:
+        msgid = rdata_obj["data"]["message_id"]
+        data = rdata_obj["data"]
+        typeindata = data["type"]
+        categoryindata = data["category"]
+        dataindata = data["data"]
+        conversationid = data["conversation_id"]
+        replayMessage(ws, msgid)
+        print(data)
+        return
+ 
     if action == "CREATE_MESSAGE" and 'error' not in rdata_obj:
         msgid = rdata_obj["data"]["message_id"]
         data = rdata_obj["data"]
@@ -157,20 +170,18 @@ def on_message(ws, message):
         categoryindata = data["category"]
         dataindata = data["data"]
         conversationid = data["conversation_id"]
+        replayMessage(ws, msgid)
+
         if data['user_id'] == mixin_config.admin_uuid:
             admin_conversation_id = data["conversation_id"]
 
-        if categoryindata not in ["SYSTEM_ACCOUNT_SNAPSHOT", "PLAIN_TEXT", "SYSTEM_CONVERSATION", "PLAIN_STICKER","PLAIN_IMAGE" ]:
+        if categoryindata not in ["SYSTEM_ACCOUNT_SNAPSHOT", "PLAIN_TEXT", "SYSTEM_CONVERSATION", "PLAIN_STICKER","PLAIN_IMAGE", "PLAIN_CONTACT"]:
             print("unknow category")
-            print(data)
-            replayMessage(ws, msgid)
+            print(rdata_obj)
             return
-        if categoryindata == "PLAIN_IMAGE" or categoryindata == "SYSTEM_CONVERSATION":
-            replayMessage(ws, msgid)
 
         if categoryindata == "SYSTEM_ACCOUNT_SNAPSHOT" and typeindata == "message":
 
-            replayMessage(ws, msgid)
             realData = base64.b64decode(dataindata)
             realAssetObj = json.loads(realData)
             userid = realAssetObj["counter_user_id"]
@@ -196,7 +207,6 @@ def on_message(ws, message):
             realStickerObj = json.loads(base64.b64decode(realStickerData))
 
             stickerData = base64.b64decode(dataindata)
-            replayMessage(ws, msgid)
             if realStickerObj['album_id'] == "eb002790-ef9b-467d-93c6-6a1d63fa2bee":
                 if realStickerObj['name'] == 'no_money':
                     sendUserAppButton(ws, ConversationId, data['user_id'], "https://babelbank.io", u"数字资产抵押贷款了解一下？".encode('utf-8'))
@@ -206,18 +216,17 @@ def on_message(ws, message):
                         oldtime = freeBonusTimeTable[data['user_id']]
                         if (now - oldtime).total_seconds() < 60 * 5:
                             btn = u"发动机过热，冷却中".encode('utf-8')
-	                    params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
+                            params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                             writeMessage(ws, "CREATE_MESSAGE",params)
                             return
                     freeBonusTimeTable[data['user_id']] = now
                     btn = u"浑身掉钱的大佬就是很任性".encode('utf-8')
-	            params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
+                    params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                     writeMessage(ws, "CREATE_MESSAGE",params)
                     bonus = str(random.randint(0,123456))
                     transferTo(mixin_api_robot, mixin_config, data['user_id'] , mixin_asset_list.CNB_ASSET_ID,bonus,"you are rich")
 
         if categoryindata == "PLAIN_TEXT" and typeindata == "message":
-            replayMessage(ws, msgid)
             ConversationId = data['conversation_id']
             realData = base64.b64decode(dataindata)
             if '?' == realData or u'？'.encode('utf-8') == realData or 'help' == realData or 'Help' == realData or u'帮助'.encode('utf-8') == realData:
@@ -226,47 +235,42 @@ def on_message(ws, message):
                 writeMessage(ws, "CREATE_MESSAGE",params)
 
                 return
+            if 'sticker' == realData:
+                sticker_blockchain_album_id = "eb002790-ef9b-467d-93c6-6a1d63fa2bee"
+                sendUserSticker(ws, data['conversation_id'], data['user_id'], sticker_blockchain_album_id, 'productive')
+                return
+            if 'contact' == realData:
+                laoshe_user_id_in_contact_card_in_uuid_format = "99cf45c4-a64b-4aa1-8f9b-40c3e21d6468"
+                zhuzi_user_id_in_contact_card_in_uuid_format = "b4450d4c-9218-4d30-995f-83e14b29e9ad"
+                robot_cnb_atm_user_id_in_contact_card_in_uuid_format = "4055702e-09d3-418d-8956-38cf637ae204"
+                sendUserContactCard(ws, data['conversation_id'], data['user_id'],laoshe_user_id_in_contact_card_in_uuid_format)
+                return
+
+
+            if 'link' == realData:
+                sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
+                return
+
+
+            if 'paycnb' == realData:
+                sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
+                return
+            if 'payeos' == realData:
+                sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
+                return
+            if 'payprs' == realData:
+                sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
+                return
+            if 'robot' == realData:
+                sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
+                return
             if data['user_id'] == mixin_config.admin_uuid:
-                btn = u"老板您来了".encode('utf-8')
-	        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
-                writeMessage(ws, "CREATE_MESSAGE",params)
                 for eachNonZeroAsset in listAssets(mixin_api_robot, mixin_config):
                     sendUserText(ws, data['conversation_id'], data['user_id'], str(eachNonZeroAsset))
 
-
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----文本消息 example-----")
-            introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了".encode('utf-8')
+            introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了\n 输入 contact\sticker\link\paycnb\payeos\payprs\ robot 可获取各种例子".encode('utf-8')
             sendUserText(ws, data['conversation_id'], data['user_id'], introductionContent)
-
-
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----Sticker example-----")
-            sticker_blockchain_album_id = "eb002790-ef9b-467d-93c6-6a1d63fa2bee"
-            sendUserSticker(ws, data['conversation_id'], data['user_id'], sticker_blockchain_album_id, 'productive')
-
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----名片 example 老社和zhuzi-----")
-            laoshe_user_id_in_contact_card_in_uuid_format = "99cf45c4-a64b-4aa1-8f9b-40c3e21d6468"
-            zhuzi_user_id_in_contact_card_in_uuid_format = "b4450d4c-9218-4d30-995f-83e14b29e9ad"
-            robot_cnb_atm_user_id_in_contact_card_in_uuid_format = "4055702e-09d3-418d-8956-38cf637ae204"
-
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'],laoshe_user_id_in_contact_card_in_uuid_format)
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'],zhuzi_user_id_in_contact_card_in_uuid_format)
-
-
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----链接按钮 example-----")
-            sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
-
-
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----付费链接按钮 example-----")
-            sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
-            sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
-            sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
-
-
-
-            sendUserText(ws, data['conversation_id'], data['user_id'], "-----当前热门机器人example-----")
-            sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
-
-
+ 
             return
            
         elif categoryindata == "PLAIN_TEXT":
@@ -300,7 +304,7 @@ def on_open(ws):
         ws.send(fgz.getvalue(), opcode=websocket.ABNF.OPCODE_BINARY)
         while True:
             a = 1
-            time.sleep(10)
+            time.sleep(1)
     thread.start_new_thread(run, ())
 
 
@@ -308,7 +312,7 @@ if __name__ == "__main__":
     while True:
 
         encoded = mixin_api_robot.genGETJwtToken('/', "", str(uuid.uuid4()))
-        websocket.enableTrace(True)
+        websocket.enableTrace(False)
         ws = websocket.WebSocketApp("wss://blaze.mixin.one/",
                                   on_message = on_message,
                                   on_error = on_error,
