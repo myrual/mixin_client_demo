@@ -279,7 +279,7 @@ def on_message(ws, message):
             sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
 
 
-            sendUserText(ws, buildConversationId(mixin_config.mixin_client_id, data['user_id']), data['user_id'], "-----付费链接按钮 example-----")
+            sendUserText(ws, ConversationId, data['user_id'], "-----付费链接按钮 example-----")
             sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
             sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
             sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
