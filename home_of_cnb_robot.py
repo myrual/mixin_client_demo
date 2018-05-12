@@ -80,6 +80,15 @@ def sendGroupText(websocketInstance, in_conversation_id, textContent):
     params = {"conversation_id": in_conversation_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(textContent)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
+def sendGroupPay(webSocketInstance, in_config, in_conversation_id, inAssetName, inAssetID, inPayAmount, linkColor = "#0CAAF5"):
+    payLink = "https://mixin.one/pay?recipient=" + in_config.mixin_client_id + "&asset=" + inAssetID + "&amount=" + str(inPayAmount) + '&trace=' + str(uuid.uuid1()) + '&memo=PRS2CNB'
+    btn = '[{"label":"' + inAssetName + '","action":"' + payLink + '","color":"' + linkColor + '"}]'
+    gameEntranceParams = {"conversation_id": in_conversation_id,"message_id":str(uuid.uuid4()),"category":"APP_BUTTON_GROUP","data":base64.b64encode(btn)}
+    writeMessage(webSocketInstance, "CREATE_MESSAGE",gameEntranceParams)
+    return
+
+
+
 
 
 def sendUserSticker(websocketInstance, in_conversation_id, to_user_id, album_id, sticker_name):
