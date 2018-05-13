@@ -6,7 +6,7 @@ There are many other language examples and SDK：
 - Go: https://github.com/MixinMessenger/bot-api-go-client
 - Java https://github.com/qige-one/mixin_java_sdk 
 
-(Official development resource)[http://developers.mixin.one/]
+[Official development resource](http://developers.mixin.one)
 
 community development resource：
 
