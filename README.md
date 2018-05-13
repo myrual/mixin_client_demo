@@ -1,4 +1,4 @@
-#The open source code for Home of CNB bot in mixin app and mixin blockchain
+# The open source code for Home of CNB bot in mixin app and mixin blockchain
 
 There are many other language examples and SDK：
 
@@ -13,7 +13,7 @@ community development resource：
 - mixin_dev_resource: https://github.com/myrual/mixin_dev_resource
 - MiXin_Player：https://github.com/albertschr/MiXin_Player
 
-##pre request
+## pre request
 ```
 pip install web.py
 pip install PyJWT
@@ -25,17 +25,17 @@ pip install pycrypto ecdsa
 ```
 
 
-##run robot 
+## run robot 
 ```
 python home_cnb_robot.py
 ```
 
-##run robot as long as possible
+## run robot as long as possible
 ```
 nohup python home_cnb_robot.py &
 ```
 
-##kill program
+## kill program
 ```
 ls -ef
 kill prociess id
