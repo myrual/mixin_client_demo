@@ -70,7 +70,7 @@ def sendUserAppButton(websocketInstance, in_conversation_id, to_user_id, realLin
 
 def sendUserContactCard(websocketInstance, in_conversation_id, to_user_id, to_share_userid):
     btnJson = json.dumps({"user_id":to_share_userid})
-    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_CONTACT","data":base64.b64encode(base64.b64encode(btnJson))}
+    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_CONTACT","data":base64.b64encode(btnJson)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
 def sendUserText(websocketInstance, in_conversation_id, to_user_id, textContent):
