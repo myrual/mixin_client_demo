@@ -246,13 +246,13 @@ def on_message(ws, message):
                     now = datetime.datetime.now()
                     if data['user_id'] in freeBonusTimeTable:
                         oldtime = freeBonusTimeTable[data['user_id']]
-                        if (now - oldtime).total_seconds() < 60 * 5:
+                        if (now - oldtime).total_seconds() < 60 * 10:
                             btn = u"发动机过热，冷却中".encode('utf-8')
                             params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                             writeMessage(ws, "CREATE_MESSAGE",params)
                             return
                     freeBonusTimeTable[data['user_id']] = now
-                    btn = u"浑身掉钱的大佬就是很任性".encode('utf-8')
+                    btn = u"浑身掉钱的大佬就是很任性，10分钟以后继续尝试".encode('utf-8')
                     params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                     writeMessage(ws, "CREATE_MESSAGE",params)
                     bonus = str(random.randint(0,123456))
