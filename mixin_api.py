@@ -9,6 +9,7 @@ from Crypto.Cipher import AES
 import hashlib
 import datetime
 import jwt
+import uuid
 
 
 
@@ -62,6 +63,23 @@ class MIXIN_API:
         #print("RS512")
         #print("====>" + encoded)
         return encoded
+    def genGETJwtToken_extConfig(self, uristring, bodystring, ext_config):
+        jwtSig = self.genGETSig(uristring, bodystring)
+        iat = datetime.datetime.utcnow()
+        exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=200)
+	encoded = jwt.encode({'uid':ext_config.mixin_client_id, 'sid':ext_config.mixin_pay_sessionid,'iat':iat,'exp': exp, 'jti':ext_config.mixin_client_id,'sig':jwtSig}, ext_config.private_key, algorithm='RS512')
+        #print("get jwt token with")
+        #print("appid:" + self.appid)
+        #print("sid  :" + self.sessionid)
+        #print("iat  :" + str(iat))
+        #print("exp  :" + str(exp))
+        #print("jti  :" + jti)
+        #print("sig  :" + jwtSig)
+        #print("priv :" + self.private_key)
+        #print("RS512")
+        #print("====>" + encoded)
+        return encoded
+
 
     def genGETListenSignedToken(self, uristring, bodystring, jti):
         jwtSig = self.genGETSig(uristring, bodystring)
@@ -80,6 +98,56 @@ class MIXIN_API:
         exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=200)
 	encoded = jwt.encode({'uid':self.appid, 'sid':self.sessionid,'iat':iat,'exp': exp, 'jti':jti,'sig':jwtSig}, self.private_key, algorithm='RS512')
         return encoded
+
+    def genPOSTJwtToken_extConfig(self, uristring, bodystring, ext_config):
+        jwtSig = self.genPOSTSig(uristring, bodystring)
+        iat = datetime.datetime.utcnow()
+        exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=200)
+	encoded = jwt.encode({'uid':ext_config.mixin_client_id, 'sid':ext_config.mixin_pay_sessionid,'iat':iat,'exp': exp, 'jti':str(uuid.uuid1()),'sig':jwtSig}, ext_config.private_key, algorithm='RS512')
+        return encoded
+
+    def genEncrypedPin_extConfig(self, ext_config):
+        privKeyObj = RSA.importKey(ext_config.private_key)
+        decoded_result = base64.b64decode(ext_config.mixin_pin_token)
+        decoded_result_inhexString = ":".join("{:02x}".format(ord(c)) for c in decoded_result)
+        print("pin_token in hex")
+        print(decoded_result_inhexString)
+        cipher = PKCS1_OAEP.new(key = privKeyObj, hashAlgo = Crypto.Hash.SHA256, label = ext_config.mixin_pay_sessionid)
+
+        decrypted_msg = cipher.decrypt(decoded_result)
+	decrypted_msg_inhexString = ":".join("{:02x}".format(ord(c)) for c in decrypted_msg)
+
+        print("aes key in hex")
+        print(decrypted_msg_inhexString)
+        
+        keyForAES = decrypted_msg
+
+        ts = int(time.time())
+        tszero = ts%0x100                                  
+        tsone = (ts%0x10000) >> 8
+        tstwo = (ts%0x1000000) >> 16
+        tsthree = (ts%0x100000000) >> 24
+        tsstring = chr(tszero) + chr(tsone) + chr(tstwo) + chr(tsthree) + '\0\0\0\0'
+        counter = '\1\0\0\0\0\0\0\0'
+        toEncryptContent = ext_config.asset_pin + tsstring + tsstring
+        lenOfToEncryptContent = len(toEncryptContent)
+        toPadCount = 16 - lenOfToEncryptContent % 16
+        if toPadCount > 0:
+            paddedContent = toEncryptContent + chr(toPadCount) * toPadCount
+        else:
+            paddedContent = toEncryptContent
+
+        print("content with padding")
+        print(":".join("{:02x}".format(ord(c)) for c in paddedContent))
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(keyForAES, AES.MODE_CBC, iv)
+        encrypted_result = cipher.encrypt(paddedContent)
+        msg = iv + encrypted_result
+        print("len of encrypted pin" + str(len(msg)))
+        print(":".join("{:02x}".format(ord(c)) for c in msg))
+        encrypted_pin = base64.b64encode(msg)
+
+        return encrypted_pin
 
     def genEncrypedPin(self):
         if self.keyForAES == "":
@@ -127,6 +195,3 @@ class MIXIN_API:
 #        print("iv + encrypted_result in base64 :" + encrypted_pin)
 
         return encrypted_pin
-
-
-

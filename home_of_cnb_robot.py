@@ -32,15 +32,25 @@ mixin_api_robot.private_key = mixin_config.private_key
 mixin_api_robot.asset_pin = mixin_config.mixin_pay_pin
 mixin_api_robot.pin_token = mixin_config.mixin_pin_token
 
+myConfig  = mixin_config.user_mixin_config()
+myConfig.mixin_client_id = mixin_config.mixin_client_id
+myConfig.mixin_pay_sessionid= mixin_config.mixin_pay_sessionid
+myConfig.mixin_pin_token= mixin_config.mixin_pin_token
+myConfig.mixin_pay_pin = mixin_config.mixin_pay_pin
+myConfig.private_key = mixin_config.private_key
+myConfig.deviceID = ""
+myConfig.keyForAES = ""
+myConfig.asset_pin = "841316"
+ 
 
 freeBonusTimeTable = {}
 
 def transferTo(robot, config, to_user_id, to_asset_id,to_asset_amount,memo):
-    encrypted_pin = robot.genEncrypedPin()
+    encrypted_pin = robot.genEncrypedPin_extConfig(config)
     body = {'asset_id': to_asset_id, 'counter_user_id':to_user_id, 'amount':str(to_asset_amount), 'pin':encrypted_pin, 'trace_id':str(uuid.uuid1())}
     body_in_json = json.dumps(body)
 
-    encoded = robot.genPOSTJwtToken('/transfers', body_in_json, config.mixin_client_id)
+    encoded = robot.genPOSTJwtToken_extConfig('/transfers', body_in_json, config)
     r = requests.post('https://api.mixin.one/transfers', json = body, headers = {"Authorization":"Bearer " + encoded})
     result_obj = r.json()
     if 'error' in result_obj:
@@ -221,10 +231,10 @@ def on_message(ws, message):
             if realAssetObj["asset_id"] == mixin_asset_list.CNB_ASSET_ID:
                 showReceipt(ws, conversationid, userid, realAssetObj["snapshot_id"])
                 if asset_amount == "1":
-                    transferTo(mixin_api_robot, mixin_config, userid, realAssetObj["asset_id"],"2","pay 1 get 2")
+                    transferTo(mixin_api_robot, myConfig, userid, realAssetObj["asset_id"],"2","pay 1 get 2")
                     return
 
-            transferTo(mixin_api_robot, mixin_config, userid, realAssetObj["asset_id"],asset_amount,"rollback")
+            transferTo(mixin_api_robot, myConfig, userid, realAssetObj["asset_id"],asset_amount,"rollback")
             sendUserText(ws, data['conversation_id'], data['user_id'], str(realAssetObj))
 
         if categoryindata == "PLAIN_STICKER":
@@ -256,7 +266,7 @@ def on_message(ws, message):
                     params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                     writeMessage(ws, "CREATE_MESSAGE",params)
                     bonus = str(random.randint(0,123456))
-                    transferTo(mixin_api_robot, mixin_config, data['user_id'] , mixin_asset_list.CNB_ASSET_ID,bonus,"you are rich")
+                    transferTo(mixin_api_robot, myConfig, data['user_id'] , mixin_asset_list.CNB_ASSET_ID,bonus,"you are rich")
 
         if categoryindata == "PLAIN_TEXT" and typeindata == "message":
             ConversationId = data['conversation_id']
@@ -284,13 +294,13 @@ def on_message(ws, message):
 
 
             if 'paycnb' == realData:
-                sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
+                sendUserPayAppButton(ws, myConfig, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
                 return
             if 'payeos' == realData:
-                sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
+                sendUserPayAppButton(ws, myConfig, ConversationId, data['user_id'], u"付0.001EOS并闪电退款".encode('utf-8'),mixin_asset_list.EOS_ASSET_ID,  0.001, "#ff0033")
                 return
             if 'payprs' == realData:
-                sendUserPayAppButton(ws, mixin_config, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
+                sendUserPayAppButton(ws, myConfig, ConversationId, data['user_id'], u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
                 return
             if 'robot' == realData:
                 sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
@@ -301,7 +311,7 @@ def on_message(ws, message):
 
             introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了\n 输入 contact\sticker\link\paycnb\payeos\payprs\ robot 可获取各种例子".encode('utf-8')
             #convID = data['conversation_id']#buildConversationId(mixin_config.mixin_client_id, data['userid'])
-            convID = buildConversationId(mixin_config.mixin_client_id, data['user_id'])
+            convID = buildConversationId(myConfig.mixin_client_id, data['user_id'])
 
             sendUserText(ws, convID, data['user_id'], introductionContent)
             return

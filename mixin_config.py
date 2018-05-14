@@ -22,3 +22,14 @@ r9fVfWzUIFLuXFM/1eM+MbZrDs9J1WHyaRHK+F/3WKs=
 
 mixin_pin_token = """csEaHIh5RuVcXqcJ9aNp/AoubC/0L9ZtGWn037XREiR5JlbAvDW52obceJ9wWxVB12V9QxmabGmGR59wLoyfhfQeSVer56jOIUrOgL4ZXaMq32Rsddp2wpydEsCJbIjDftKwHJJvfz0XFAsNeBCTC+OfouaLW86Q50g3p7razbM="""
 admin_uuid = "28ee416a-0eaa-4133-bc79-9676909b7b4e"
+class user_mixin_config:
+    def __init__(self):
+        self.mixin_client_id = ""
+        self.mixin_pay_sessionid= ""
+        self.mixin_pin_token= ""
+        self.mixin_pay_pin = ""
+        self.private_key = ""
+        self.deviceID = ""
+        self.keyForAES = ""
+        self.asset_pin = ""
+ 
