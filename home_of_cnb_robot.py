@@ -97,7 +97,7 @@ def sendUserSticker(websocketInstance, in_conversation_id, to_user_id, album_id,
     realStickerObj['name'] = sticker_name
 
     btnJson = json.dumps(realStickerObj)
-    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_STICKER","data":base64.b64encode(base64.b64encode(btnJson))}
+    params = {"conversation_id": in_conversation_id,"recipient_id":to_user_id,"message_id":str(uuid.uuid4()),"category":"PLAIN_STICKER","data":base64.b64encode(btnJson)}
     return writeMessage(websocketInstance, "CREATE_MESSAGE",params)
 
 
