@@ -295,12 +295,15 @@ def on_message(ws, message):
             if 'robot' == realData:
                 sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
                 return
-            if data['user_id'] == mixin_config.admin_uuid:
+            if 'ye' == realData and data['user_id'] == mixin_config.admin_uuid:
                 for eachNonZeroAsset in listAssets(mixin_api_robot, mixin_config):
                     sendUserText(ws, data['conversation_id'], data['user_id'], str(eachNonZeroAsset))
 
             introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；不玩了，不玩了，没钱了\n 输入 contact\sticker\link\paycnb\payeos\payprs\ robot 可获取各种例子".encode('utf-8')
-            sendUserText(ws, buildConversationId(mixin_config.mixin_client_id, data['userid']), data['user_id'], introductionContent)
+            #convID = data['conversation_id']#buildConversationId(mixin_config.mixin_client_id, data['userid'])
+            convID = buildConversationId(mixin_config.mixin_client_id, data['user_id'])
+
+            sendUserText(ws, convID, data['user_id'], introductionContent)
             return
            
         elif categoryindata == "PLAIN_TEXT":
@@ -342,7 +345,7 @@ if __name__ == "__main__":
     while True:
 
         encoded = mixin_api_robot.genGETJwtToken('/', "", str(uuid.uuid4()))
-        websocket.enableTrace(False)
+        websocket.enableTrace(True)
         ws = websocket.WebSocketApp("wss://blaze.mixin.one/",
                                   on_message = on_message,
                                   on_error = on_error,
