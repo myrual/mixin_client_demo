@@ -10,6 +10,7 @@ import gzip
 from cStringIO import StringIO
 import base64
 import mixin_config
+import hashlib
 import mixin_asset_list
 import random
 import datetime
@@ -21,6 +22,32 @@ except ImportError:
     import _thread as thread
 import time
 btccash_asset_id = "fd11b6e3-0b87-41f1-a41f-f0e9b49e5bf0"
+
+from sqlalchemy import create_engine
+
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+from database_type import *
+engine = create_engine('sqlite:///sqlalchemy_home_of_cnb.db')
+# Create all tables in the engine. This is equivalent to "Create Table"
+# statements in raw SQL.
+Base.metadata.create_all(engine)
+Base.metadata.bind = engine
+ 
+DBSession = sessionmaker(bind=engine)
+# A DBSession() instance establishes all conversations with the database
+# and represents a "staging zone" for all the objects loaded into the
+# database session object. Any change made against the objects in the
+# session won't be persisted into the database until you call
+# session.commit(). If you're not happy about the changes, you can
+# revert all of them back to the last commit by calling
+# session.rollback()
+session = DBSession()
+
+
 
 admin_conversation_id = ""
 
@@ -172,6 +199,25 @@ def listAssets(robot, config):
             asset_list.append((singleAsset["symbol"], singleAsset["balance"]))
     return asset_list
 
+def recordFreeBonus(in_user_id):
+    hashOfUserID = hashlib.sha256(in_user_id).hexdigest()
+    thisFreshMan = session.query(Freshman).filter_by(userid = hashOfUserID).first()
+    if thisFreshMan != None:
+        thisFreshMan.bonusCounter = thisFreshMan.bonusCounter + 1
+        session.commit()
+    else:
+        newFreshMan = Freshman()
+        newFreshMan.userid = hashOfUserID
+        newFreshMan.bonusCounter = 1
+        session.add(newFreshMan)
+        session.commit()
+
+def notFreshMen(in_user_id):
+    hashOfUserID = hashlib.sha256(in_user_id).hexdigest()
+    thisFreshMan = session.query(Freshman).filter_by(userid = hashOfUserID).first()
+    if thisFreshMan != None and thisFreshMan.bonusCounter > 20:
+        return True
+    return False
 
 def on_message(ws, message):
     global admin_conversation_id
@@ -242,21 +288,25 @@ def on_message(ws, message):
             categoryindata = data["category"]
             conversationid = data["conversation_id"]
             data['user_id'] == mixin_config.admin_uuid
-            sendUserText(ws, data['conversation_id'], data['user_id'], str({'type':data['type'],'category':data['category'], 'conversation_id':data['conversation_id'], 'user_id':data['user_id']}))
 
             ConversationId = data['conversation_id']
             realStickerData = base64.b64decode(dataindata)
-            realStickerObj = json.loads(base64.b64decode(realStickerData))
+            realStickerObj = json.loads(realStickerData)
+            sendUserText(ws, data['conversation_id'], data['user_id'], str(realStickerObj))
 
-            stickerData = base64.b64decode(dataindata)
             if realStickerObj['album_id'] == "eb002790-ef9b-467d-93c6-6a1d63fa2bee":
                 if realStickerObj['name'] == 'no_money':
                     sendUserAppButton(ws, ConversationId, data['user_id'], "https://babelbank.io", u"数字资产抵押贷款了解一下？".encode('utf-8'))
                 if realStickerObj['name'] in ['capital_predator', 'capital_cattle', 'capital_cat']:
                     now = datetime.datetime.now()
+                    if notFreshMen(data['user_id']):
+                        sendUserText(ws, data['conversation_id'], data['user_id'], u"新手期已过，没有奖励了".encode("utf-8"))
+                        return
+                    recordFreeBonus(data['user_id'])
+
                     if data['user_id'] in freeBonusTimeTable:
                         oldtime = freeBonusTimeTable[data['user_id']]
-                        if (now - oldtime).total_seconds() < 60 * 10:
+                        if (now - oldtime).total_seconds() <  10 * 60:
                             btn = u"发动机过热，冷却中".encode('utf-8')
                             params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                             writeMessage(ws, "CREATE_MESSAGE",params)
@@ -265,7 +315,7 @@ def on_message(ws, message):
                     btn = u"浑身掉钱的大佬就是很任性，10分钟以后继续尝试".encode('utf-8')
                     params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
                     writeMessage(ws, "CREATE_MESSAGE",params)
-                    bonus = str(random.randint(0,123456))
+                    bonus = str(random.randint(0,12345))
                     transferTo(mixin_api_robot, myConfig, data['user_id'] , mixin_asset_list.CNB_ASSET_ID,bonus,"you are rich")
 
         if categoryindata == "PLAIN_TEXT" and typeindata == "message":
@@ -291,8 +341,6 @@ def on_message(ws, message):
             if 'link' == realData:
                 sendUserAppButton(ws, ConversationId, data['user_id'], "http://dapai.one:8080", u"了解我的user id".encode('utf-8'))
                 return
-
-
             if 'paycnb' == realData:
                 sendUserPayAppButton(ws, myConfig, ConversationId, data['user_id'], u"付1CNB，得2CNB".encode('utf-8'),mixin_asset_list.CNB_ASSET_ID,  1, "#ff0033")
                 return
@@ -305,6 +353,26 @@ def on_message(ws, message):
             if 'robot' == realData:
                 sendUserContactCard(ws, data['conversation_id'], data['user_id'],robot_cnb_atm_user_id_in_contact_card_in_uuid_format)
                 return
+            if 'friendsofju' == realData.lower() or 'friendsofxiaodong' == realData.lower() or 'friendsoflaoshe' == realData.lower() or 'friendsofzhuzi' == realData.lower():
+                if notFreshMen(data['user_id']):
+                    sendUserText(ws, data['conversation_id'], data['user_id'], u"新手期已过，没有奖励了".encode("utf-8"))
+                    return
+                recordFreeBonus(data['user_id'])
+                now = datetime.datetime.now()
+                if data['user_id'] in freeBonusTimeTable:
+                    oldtime = freeBonusTimeTable[data['user_id']]
+                    if (now - oldtime).total_seconds() < 60 * 10:
+                        btn = u"点钞机过热，冷却中".encode('utf-8')
+                        params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
+                        writeMessage(ws, "CREATE_MESSAGE",params)
+                        return
+                freeBonusTimeTable[data['user_id']] = now
+                btn = u"与大佬做朋友就是好，10分钟以后再来一发".encode('utf-8')
+                params = {"conversation_id": data['conversation_id'],"recipient_id":data['user_id'],"message_id":str(uuid.uuid4()),"category":"PLAIN_TEXT","data":base64.b64encode(btn)}
+                writeMessage(ws, "CREATE_MESSAGE",params)
+                bonus = str(random.randint(0,12345))
+                transferTo(mixin_api_robot, myConfig, data['user_id'] , mixin_asset_list.CNB_ASSET_ID,bonus,"you are rich")
+
             if 'ye' == realData and data['user_id'] == mixin_config.admin_uuid:
                 for eachNonZeroAsset in listAssets(mixin_api_robot, mixin_config):
                     sendUserText(ws, data['conversation_id'], data['user_id'], str(eachNonZeroAsset))
