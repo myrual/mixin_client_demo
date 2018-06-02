@@ -319,6 +319,8 @@ def on_message(ws, message):
                     transferTo(mixin_api_robot, myConfig, data['user_id'] , mixin_asset_list.CNB_ASSET_ID,bonus,"you are rich")
 
         if categoryindata == "PLAIN_TEXT" and typeindata == "message":
+            if data['user_id'] in ["7921bb6f-f2e0-4ecd-a58e-e126c0437ed2", "f4456f2f-5b05-4779-9307-f037e712356b", "9478537e-6171-455f-a219-9bfb843e35d8", "f875e041-34b4-4edc-aed5-9e0188dd88da"]:
+                return
             ConversationId = data['conversation_id']
             realData = base64.b64decode(dataindata)
             if '?' == realData or u'？'.encode('utf-8') == realData or 'help' == realData or 'Help' == realData or u'帮助'.encode('utf-8') == realData:

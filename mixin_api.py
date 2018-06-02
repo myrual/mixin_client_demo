@@ -10,11 +10,45 @@ import hashlib
 import datetime
 import jwt
 import uuid
+import requests
+import json
+import ssl
 
 
 
+def transferTo(robot, config, to_user_id, to_asset_id,to_asset_amount,memo):
+    encrypted_pin = robot.genEncrypedPin_extConfig(config)
+    body = {'asset_id': to_asset_id, 'counter_user_id':to_user_id, 'amount':str(to_asset_amount), 'pin':encrypted_pin, 'trace_id':str(uuid.uuid1()), 'memo':memo}
+    body_in_json = json.dumps(body)
+
+    encoded = robot.genPOSTJwtToken_extConfig('/transfers', body_in_json, config)
+    r = requests.post('https://api.mixin.one/transfers', json = body, headers = {"Authorization":"Bearer " + encoded})
+    result_obj = r.json()
+    if 'error' in result_obj:
+        error_body = result_obj['error']
+        error_code = error_body['code']
+        if error_code == 20119:
+            print("to :" + to_user_id + " with asset:" + to_asset_id + " amount:" + to_asset_amount)
+            print(result_obj)
+        return False
+    else:
+        return True
 
 
+def transferToFromPub(robot, config, to_user_id, to_asset_id,to_asset_amount,memo, trace_uuid=""):
+    encrypted_pin = robot.genEncrypedPin_extConfig(config)
+    if trace_uuid == "":
+        body = {'asset_id': to_asset_id, 'counter_user_id':to_user_id, 'amount':str(to_asset_amount), 'pin':encrypted_pin, 'trace_id':str(uuid.uuid1()), 'memo':memo}
+    else:
+        body = {'asset_id': to_asset_id, 'counter_user_id':to_user_id, 'amount':str(to_asset_amount), 'pin':encrypted_pin, 'trace_id':trace_uuid, 'memo':memo}
+
+    body_in_json = json.dumps(body)
+
+    encoded = robot.genPOSTJwtToken_extConfig('/transfers', body_in_json, config)
+    r = requests.post('https://api.mixin.one/transfers', json = body, headers = {"Authorization":"Bearer " + encoded})
+    result_obj = r.json()
+    print(result_obj)
+    return result_obj
 
 
 class MIXIN_API:
@@ -110,15 +144,11 @@ class MIXIN_API:
         privKeyObj = RSA.importKey(ext_config.private_key)
         decoded_result = base64.b64decode(ext_config.mixin_pin_token)
         decoded_result_inhexString = ":".join("{:02x}".format(ord(c)) for c in decoded_result)
-        print("pin_token in hex")
-        print(decoded_result_inhexString)
         cipher = PKCS1_OAEP.new(key = privKeyObj, hashAlgo = Crypto.Hash.SHA256, label = ext_config.mixin_pay_sessionid)
 
         decrypted_msg = cipher.decrypt(decoded_result)
 	decrypted_msg_inhexString = ":".join("{:02x}".format(ord(c)) for c in decrypted_msg)
 
-        print("aes key in hex")
-        print(decrypted_msg_inhexString)
         
         keyForAES = decrypted_msg
 
@@ -137,14 +167,10 @@ class MIXIN_API:
         else:
             paddedContent = toEncryptContent
 
-        print("content with padding")
-        print(":".join("{:02x}".format(ord(c)) for c in paddedContent))
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(keyForAES, AES.MODE_CBC, iv)
         encrypted_result = cipher.encrypt(paddedContent)
         msg = iv + encrypted_result
-        print("len of encrypted pin" + str(len(msg)))
-        print(":".join("{:02x}".format(ord(c)) for c in msg))
         encrypted_pin = base64.b64encode(msg)
 
         return encrypted_pin
