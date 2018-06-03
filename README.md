@@ -23,6 +23,9 @@ $ python get-pip.py
 ```
 yum install epel-release
 yum -y install python-pip
+yum install gcc
+yum install gcc-c++
+yum install python-devel
 ```
 ## pre request
 ```
