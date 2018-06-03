@@ -14,7 +14,7 @@ community development resource：
 - MiXin_Player：https://github.com/albertschr/MiXin_Player
 
 
-## install pip if you don't have it
+## install pip if it is missing in your OS
 ```
 $ curl “https://bootstrap.pypa.io/get-pip.py" -o “get-pip.py”
 $ python get-pip.py
