@@ -13,6 +13,12 @@ community development resource：
 - mixin_dev_resource: https://github.com/myrual/mixin_dev_resource
 - MiXin_Player：https://github.com/albertschr/MiXin_Player
 
+
+## install pip if you don't have it
+```
+$ curl “https://bootstrap.pypa.io/get-pip.py" -o “get-pip.py”
+$ python get-pip.py
+```
 ## pre request
 ```
 pip install web.py
