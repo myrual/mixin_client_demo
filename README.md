@@ -19,7 +19,8 @@ community development resource：
 $ curl “https://bootstrap.pypa.io/get-pip.py" -o “get-pip.py”
 $ python get-pip.py
 ```
-### centos6.8
+### install python27 and pip on centos6.8
+https://gist.github.com/dalegaspi/dec44117fa5e7597a559
 ```
 yum install epel-release
 yum -y install python-pip
