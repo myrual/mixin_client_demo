@@ -26,6 +26,7 @@ yum -y install python-pip
 yum install gcc
 yum install gcc-c++
 yum install python-devel
+pip install -U setuptools
 ```
 ## pre request
 ```
