@@ -22,22 +22,19 @@ $ python get-pip.py
 ### install python27 and pip on centos6.8
 https://gist.github.com/dalegaspi/dec44117fa5e7597a559
 ```
-yum install epel-release
-yum -y install python-pip
 yum install gcc
 yum install gcc-c++
 yum install python-devel
-pip install -U setuptools
 ```
 ## pre request
 ```
-pip install web.py
-pip install PyJWT
-pip install websocket-client
-pip install requests
-pip install pycrypto
-pip install cryptography
-pip install pycrypto ecdsa
+pip2.7 install web.py
+pip2.7 install PyJWT
+pip2.7 install websocket-client
+pip2.7 install requests
+pip2.7 install pycrypto
+pip2.7 install cryptography
+pip2.7 install pycrypto ecdsa
 ```
 
 
