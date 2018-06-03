@@ -19,6 +19,11 @@ community development resource：
 $ curl “https://bootstrap.pypa.io/get-pip.py" -o “get-pip.py”
 $ python get-pip.py
 ```
+### centos6.8
+```
+yum install epel-release
+yum -y install python-pip
+```
 ## pre request
 ```
 pip install web.py
