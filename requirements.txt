@@ -1,0 +1,8 @@
+cryptography==2.3.1
+ecdsa==0.13
+pycrypto==2.6.1
+PyJWT==1.6.4
+requests==2.19.1
+SQLAlchemy==1.2.12
+web.py==0.39
+websocket-client==0.53.0
