@@ -151,17 +151,15 @@ def recordFreeBonus(in_user_id):
 def notFreshMen(in_user_id):
     hashOfUserID = hashlib.sha256(in_user_id).hexdigest()
     thisFreshMan = session.query(Freshman).filter_by(userid = hashOfUserID).first()
-    if thisFreshMan != None and thisFreshMan.bonusCounter > 20:
-        return True
-    return False
+    return thisFreshMan != None and thisFreshMan.bonusCounter > 20
 
 def on_message(ws, message):
     inbuffer = StringIO(message)
     f = gzip.GzipFile(mode="rb", fileobj=inbuffer)
     rdata_injson = f.read()
+    print("recv msg:", rdata_injson)
     rdata_obj = json.loads(rdata_injson)
     action = rdata_obj["action"]
-    print("recv:", rdata_obj)
 
     if action not in ["ACKNOWLEDGE_MESSAGE_RECEIPT" ,"CREATE_MESSAGE", "LIST_PENDING_MESSAGES"]:
         print("unknow action")
@@ -171,11 +169,6 @@ def on_message(ws, message):
         return
 
     if action == "CREATE_MESSAGE":
-        if 'error' in rdata_obj:
-            msgid = rdata_obj["data"]["message_id"]
-            replayMessage(ws, msgid)
-            return
-
         data = rdata_obj["data"]
         msgid = data["message_id"]
         typeindata = data["type"]
@@ -183,21 +176,23 @@ def on_message(ws, message):
         userId = data["user_id"]
         conversationId = data["conversation_id"]
         dataindata = data["data"]
-        # why?
+        realData = base64.b64decode(dataindata)
+        print("msg b64 data decoded:", realData)
         replayMessage(ws, msgid)
+
+        if 'error' in rdata_obj:
+            return
 
         if categoryindata not in ["SYSTEM_ACCOUNT_SNAPSHOT", "PLAIN_TEXT", "SYSTEM_CONVERSATION", "PLAIN_STICKER", "PLAIN_IMAGE", "PLAIN_CONTACT"]:
             print("unknow category")
             return
 
         if categoryindata == "PLAIN_IMAGE" or categoryindata == "SYSTEM_CONVERSATION":
-            realData = base64.b64decode(dataindata)
             sysConversationObj = json.loads(realData)
             if sysConversationObj["action"] == "ADD":
                 sendGroupText(ws, conversationId, "hello")
 
         if categoryindata == "SYSTEM_ACCOUNT_SNAPSHOT" and typeindata == "message":
-            realData = base64.b64decode(dataindata)
             realAssetObj = json.loads(realData)
             counterUserId = realAssetObj["counter_user_id"]
             asset_amount = realAssetObj["amount"]
@@ -212,50 +207,24 @@ def on_message(ws, message):
                 return
 
         if categoryindata == "PLAIN_STICKER":
-            typeindata = data["type"]
-            categoryindata = data["category"]
-            realStickerData = base64.b64decode(dataindata)
-            realStickerObj = json.loads(realStickerData)
+            realStickerObj = json.loads(realData)
             sendUserText(ws, conversationId, userId, str(realStickerObj))
 
-            if realStickerObj['album_id'] == "eb002790-ef9b-467d-93c6-6a1d63fa2bee":
-                if realStickerObj['name'] == 'no_money':
-                    sendUserAppButton(ws, conversationId, userId, "https://babelbank.io", u"数字资产抵押贷款了解一下？".encode('utf-8'))
-                if realStickerObj['name'] in ['capital_predator', 'capital_cattle', 'capital_cat']:
-                    now = datetime.datetime.now()
-                    if notFreshMen(userId):
-                        sendUserText(ws, conversationId, userId, u"新手期已过，没有奖励了".encode("utf-8"))
-                        return
-
-                    recordFreeBonus(userId)
-                    if userId in freeBonusTimeTable:
-                        oldtime = freeBonusTimeTable[userId]
-                        if (now - oldtime).total_seconds() <  10 * 60:
-                            sendUserText(ws, conversationId, userId, u"点钞机过热，冷却中".encode('utf-8'))
-                            return
-
-                    freeBonusTimeTable[userId] = now
-                    sendUserText(ws, conversationId, userId, u"浑身掉钱的大佬就是很任性，10分钟以后继续尝试".encode('utf-8'))
-                    bonus = str(random.randint(0,12345))
-                    mixin_api_robot.transferTo(userId, mixin_asset_list.CNB_ASSET_ID, bonus,"you are rich")
-
         if categoryindata == "PLAIN_TEXT" and typeindata == "message":
-            realData = base64.b64decode(dataindata)
-            if '?' == realData or u'？'.encode('utf-8') == realData or 'help' == realData or 'Help' == realData or u'帮助'.encode('utf-8') == realData:
-                introductionContent = u"CNB是数字货币社区行为艺术作品产生的token。由老社发行，zhuzi撰写白皮书，西乔设计logo，霍大佬广为宣传。本机器人代码 https://github.com/myrual/mixin_client_demo \n机器人可以理解区块链系列贴纸：向大鳄/大喵/大牛低头；买币是第一生产力；不玩了，不玩了，没钱了\n 输入 contact\sticker\link\paycnb\payeos\payprs 可获取各种例子".encode('utf-8')
+            realData = realData.lower()
+            if realData in ['?', '？', 'help', u'帮助'.encode('utf-8')]:
+                introductionContent = u"""本机器人代码 https://github.com/hxzqlh/mixin_client_demo 机器人可以理解区块链系列贴纸：向资本大鳄低头；买币是第一生产力；不玩了，不玩了，没钱了。输入 contact/sticker/link/paycnb/payeos/payprs/bonus 可获取各种例子""".encode('utf-8')
                 sendUserText(ws, conversationId, userId, introductionContent)
                 return
 
             if 'sticker' == realData:
-                # 买币是第一生产力
+                # TODO 买币是第一生产力
                 sticker_blockchain_album_id = "eb002790-ef9b-467d-93c6-6a1d63fa2bee"
                 sendUserSticker(ws, conversationId, userId, sticker_blockchain_album_id, 'productive')
                 return
 
             if 'contact' == realData:
-                #1054813
-                my_uuid = "a9c754ff-1e26-4f81-bd20-955de8982cd6"
-                sendUserContactCard(ws, conversationId, userId, my_uuid)
+                sendUserContactCard(ws, conversationId, userId, mixin_config.admin_uuid)
                 return
 
             if 'link' == realData:
@@ -274,7 +243,7 @@ def on_message(ws, message):
                 sendUserPayAppButton(ws, conversationId, userId, u"付0.01PRS并闪电退款".encode('utf-8'),mixin_asset_list.PRS_ASSET_ID,  0.01, "#ff0033")
                 return
 
-            if 'friendsofju' == realData.lower() or 'friendsofxiaodong' == realData.lower() or 'friendsoflaoshe' == realData.lower() or 'friendsofzhuzi' == realData.lower():
+            if 'bonus' == realData:
                 if notFreshMen(userId):
                     sendUserText(ws, conversationId, userId, u"新手期已过，没有奖励了".encode("utf-8"))
                     return
@@ -289,10 +258,10 @@ def on_message(ws, message):
 
                 freeBonusTimeTable[userId] = now
                 sendUserText(ws, conversationId, userId, u"与大佬做朋友就是好，10分钟以后再来一发".encode('utf-8'))
-                bonus = str(random.randint(0,100))
+                bonus = str(random.randint(10,100))
                 mixin_api_robot.transferTo(userId, mixin_asset_list.CNB_ASSET_ID, bonus, "you are rich")
 
-            if 'ye' == realData and userId == mixin_config.admin_uuid:
+            if 'robot' == realData and userId == mixin_config.admin_uuid:
                 for eachNonZeroAsset in mixin_api_robot.listAssets():
                     sendUserText(ws, conversationId, userId, str(eachNonZeroAsset))
                 return
